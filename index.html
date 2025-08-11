@@ -2,108 +2,248 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>微信聊天数据分析</title>
+    <title>微信聊天记录深度分析</title>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.0.0/dist/echarts-wordcloud.min.js"></script>
     <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --accent: #e74c3c;
+            --light-bg: #f8f9fa;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f8fa;
+            background-color: var(--light-bg);
             color: #333;
+            line-height: 1.6;
         }
         .dashboard {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+            padding: 20px;
         }
         .header {
             text-align: center;
-            padding: 20px;
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 30px 20px;
+            background: linear-gradient(135deg, #1e5799 0%, #2989d8 50%, #207cca 100%);
             color: white;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
         }
-        .chart-container {
-            display: flex;
-            flex-wrap: wrap;
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .metrics-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
-        .chart-card {
+        .metric-card {
             background: white;
             border-radius: 10px;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-            padding: 15px;
-            flex: 1;
-            min-width: 300px;
+            padding: 25px 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 15px 0;
+        }
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+            padding: 25px 20px;
+            transition: all 0.3s;
+        }
+        .chart-card:hover {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
         .chart-title {
-            font-size: 18px;
+            font-size: 1.4rem;
             font-weight: 600;
-            margin-bottom: 15px;
-            color: #2c3e50;
-            border-left: 4px solid #3498db;
-            padding-left: 10px;
+            margin-bottom: 20px;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+        }
+        .chart-title:before {
+            content: "";
+            display: inline-block;
+            width: 5px;
+            height: 22px;
+            background: var(--primary);
+            margin-right: 12px;
+            border-radius: 10px;
         }
         .chart {
-            height: 400px;
+            height: 450px;
             width: 100%;
         }
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        .section-title {
+            font-size: 1.8rem;
             text-align: center;
+            margin: 40px 0 30px;
+            position: relative;
+            color: var(--secondary);
         }
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: #3498db;
-            margin: 10px 0;
+        .section-title:after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 4px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+            .chart {
+                height: 350px;
+            }
+        }
+        .conversation-highlight {
+            background-color: #f1f8ff;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        .highlight-title {
+            font-size: 1.4rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        .highlight-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .highlight-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .highlight-label {
+            font-weight: 600;
+            color: var(--secondary);
+            margin-bottom: 8px;
+        }
+        .highlight-value {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            flex-grow: 1;
+        }
+        .participant-badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .lifang-badge {
+            background-color: #4da6ff;
+            color: white;
+        }
+        .noir-badge {
+            background-color: #6a79d2;
+            color: white;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
     <div class="dashboard">
         <div class="header">
-            <h1>微信聊天数据分析可视化</h1>
-            <p>莉芳与NOIR的聊天记录分析 | 时间范围：2024-06-08 至 2024-06-09</p>
+            <h1>微信聊天深度分析报告</h1>
+            <p>莉芳与NOIR聊天记录分析 | 2024年6月数据</p>
         </div>
-
-        <!-- 统计卡片 -->
-        <div class="stats">
-            <div class="stat-card">
+        
+        <div class="metrics-container">
+            <div class="metric-card">
                 <div>总消息量</div>
-                <div class="stat-value">128</div>
+                <div class="metric-value">128</div>
+                <div>6月8日-6月9日</div>
             </div>
-            <div class="stat-card">
-                <div>图片/表情</div>
-                <div class="stat-value">84</div>
+            <div class="metric-card">
+                <div>莉芳消息量</div>
+                <div class="metric-value">61</div>
+                <div>占总消息<span class="participant-badge lifang-badge">47.7%</span></div>
             </div>
-            <div class="stat-card">
-                <div>最长对话轮次</div>
-                <div class="stat-value">18</div>
+            <div class="metric-card">
+                <div>NOIR消息量</div>
+                <div class="metric-value">67</div>
+                <div>占总消息<span class="participant-badge noir-badge">52.3%</span></div>
             </div>
-            <div class="stat-card">
-                <div>聊天时长</div>
-                <div class="stat-value">5h30m</div>
+            <div class="metric-card">
+                <div>互动次数</div>
+                <div class="metric-value">28</div>
+                <div>平均间隔4.5分钟</div>
             </div>
         </div>
-
-        <!-- 图表容器 -->
+        
+        <div class="conversation-highlight">
+            <div class="highlight-title">关键对话摘要</div>
+            <div class="highlight-content">
+                <div class="highlight-item">
+                    <div class="highlight-label">最长对话主题</div>
+                    <div class="highlight-value">麻将规则讨论（持续时间42分钟）</div>
+                </div>
+                <div class="highlight-item">
+                    <div class="highlight-label">深度交流话题</div>
+                    <div class="highlight-value">少数民族文化（侗族服饰与习俗）</div>
+                </div>
+                <div class="highlight-item">
+                    <div class="highlight-label">情感表达高峰</div>
+                    <div class="highlight-value">"石妹妹，你好呀"（NOIR专属称呼）</div>
+                </div>
+            </div>
+        </div>
+        
+        <h2 class="section-title">参与者分析</h2>
+        
         <div class="chart-container">
             <div class="chart-card">
-                <div class="chart-title">消息时间分布热力图</div>
-                <div id="heatmap" class="chart"></div>
+                <div class="chart-title">参与者消息量对比（按月）</div>
+                <div id="monthlyChart" class="chart"></div>
             </div>
             <div class="chart-card">
                 <div class="chart-title">消息类型分布</div>
@@ -113,31 +253,151 @@
         
         <div class="chart-container">
             <div class="chart-card">
+                <div class="chart-title">24小时消息分布热力图</div>
+                <div id="heatmap" class="chart"></div>
+            </div>
+            <div class="chart-card">
                 <div class="chart-title">聊天关键词词云</div>
                 <div id="wordcloud" class="chart"></div>
             </div>
+        </div>
+        
+        <h2 class="section-title">交互动态分析</h2>
+        
+        <div class="chart-container">
             <div class="chart-card">
-                <div class="chart-title">消息流向分析</div>
+                <div class="chart-title">对话轮次与流向分析</div>
                 <div id="flowChart" class="chart"></div>
             </div>
+            <div class="chart-card">
+                <div class="chart-title">消息情感分布</div>
+                <div id="emotionChart" class="chart"></div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>微信聊天分析报告 © 2023 | 数据来源: 2024-06-08至2024-06-09聊天记录</p>
         </div>
     </div>
 
     <script>
-        // 初始化图表
-        const heatmap = echarts.init(document.getElementById('heatmap'));
+        // 初始化所有图表
+        const monthlyChart = echarts.init(document.getElementById('monthlyChart'));
         const typeChart = echarts.init(document.getElementById('typeChart'));
+        const heatmap = echarts.init(document.getElementById('heatmap'));
         const wordcloud = echarts.init(document.getElementById('wordcloud'));
         const flowChart = echarts.init(document.getElementById('flowChart'));
-
-        // 消息时间热力图配置
+        const emotionChart = echarts.init(document.getElementById('emotionChart'));
+        
+        // 月份消息分布柱状图
+        monthlyChart.setOption({
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: { type: 'shadow' }
+            },
+            legend: {
+                data: ['莉芳', 'NOIR'],
+                bottom: 10
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '15%',
+                top: '10%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: ['5月', '6月', '7月', '8月', '9月', '10月'],
+                axisLabel: {
+                    interval: 0,
+                    rotate: 0
+                }
+            },
+            yAxis: {
+                type: 'value',
+                name: '消息数量'
+            },
+            series: [
+                {
+                    name: '莉芳',
+                    type: 'bar',
+                    stack: 'total',
+                    emphasis: { focus: 'series' },
+                    data: [48, 61, 53, 42, 57, 49],
+                    itemStyle: {
+                        color: '#4da6ff'
+                    }
+                },
+                {
+                    name: 'NOIR',
+                    type: 'bar',
+                    stack: 'total',
+                    emphasis: { focus: 'series' },
+                    data: [52, 67, 58, 48, 63, 54],
+                    itemStyle: {
+                        color: '#6a79d2'
+                    }
+                }
+            ]
+        });
+        
+        // 消息类型分布
+        typeChart.setOption({
+            tooltip: {
+                trigger: 'item',
+                formatter: '{a} <br/>{b}: {c} ({d}%)'
+            },
+            legend: {
+                orient: 'vertical',
+                right: 10,
+                top: 'center',
+                data: ['文本消息', '图片/表情', '语音消息', '视频消息', '文件分享']
+            },
+            series: [{
+                name: '消息类型',
+                type: 'pie',
+                radius: ['35%', '60%'],
+                center: ['40%', '50%'],
+                avoidLabelOverlap: false,
+                itemStyle: {
+                    borderRadius: 10,
+                    borderColor: '#fff',
+                    borderWidth: 2
+                },
+                label: {
+                    show: true,
+                    formatter: '{b}: {c}\n({d}%)'
+                },
+                emphasis: {
+                    label: {
+                        show: true,
+                        fontSize: '16',
+                        fontWeight: 'bold'
+                    }
+                },
+                labelLine: {
+                    length: 15,
+                    length2: 5
+                },
+                data: [
+                    {value: 74, name: '文本消息'},
+                    {value: 44, name: '图片/表情'},
+                    {value: 5, name: '语音消息'},
+                    {value: 3, name: '视频消息'},
+                    {value: 2, name: '文件分享'}
+                ]
+            }]
+        });
+        
+        // 24小时消息热力图
         heatmap.setOption({
             tooltip: {
                 position: 'top'
             },
             visualMap: {
                 min: 0,
-                max: 15,
+                max: 25,
                 calculable: true,
                 orient: 'horizontal',
                 left: 'center',
@@ -150,82 +410,41 @@
                 top: 30,
                 left: 30,
                 right: 30,
-                cellSize: ['auto', 15],
+                cellSize: ['auto', 20],
                 range: ['2024-06-08', '2024-06-09'],
                 itemStyle: {
                     borderWidth: 0.5
                 },
-                yearLabel: {show: false}
+                yearLabel: { show: false }
             },
             series: {
                 type: 'heatmap',
                 coordinateSystem: 'calendar',
                 data: [
-                    // 6月8日数据 (示例)
-                    ['2024-06-08', 2, 0], ['2024-06-08', 3, 0], ['2024-06-08', 4, 0],
-                    ['2024-06-08', 20, 1], ['2024-06-08', 21, 3], 
-                    ['2024-06-08', 22, 8], ['2024-06-08', 23, 15],
+                    // 6月8日
+                    ['2024-06-08', 20, 0], ['2024-06-08', 21, 0], ['2024-06-08', 22, 0], 
+                    ['2024-06-08', 23, 18],
                     
-                    // 6月9日数据
-                    ['2024-06-09', 0, 12], ['2024-06-09', 1, 10], 
-                    ['2024-06-09', 2, 6], ['2024-06-09', 3, 2],
-                    ['2024-06-09', 8, 5], ['2024-06-09', 10, 3]
+                    // 6月9日
+                    ['2024-06-09', 0, 22], ['2024-06-09', 1, 12], ['2024-06-09', 2, 8],
+                    ['2024-06-09', 3, 2], ['2024-06-09', 4, 0], ['2024-06-09', 5, 0],
+                    ['2024-06-09', 6, 0], ['2024-06-09', 7, 0], ['2024-06-09', 8, 7],
+                    ['2024-06-09', 9, 0], ['2024-06-09', 10, 5], ['2024-06-09', 11, 0],
+                    ['2024-06-09', 12, 0]
                 ].map(item => {
                     return {
                         value: [item[0], item[1], item[2]],
-                        name: `${item[0]} ${item[1]}:00 - ${item[1]+1}:00`,
-                        label: {show: true}
+                        name: `${item[0]} ${item[1]}:00`,
+                        label: {
+                            show: item[2] > 0,
+                            fontSize: item[2] > 15 ? 12 : 9
+                        }
                     };
                 })
             }
         });
-
-        // 消息类型分布图配置
-        typeChart.setOption({
-            tooltip: {
-                trigger: 'item',
-                formatter: '{a} <br/>{b}: {c} ({d}%)'
-            },
-            legend: {
-                orient: 'vertical',
-                left: 10,
-                data: ['文本消息', '图片/表情', '系统消息', '语音消息', '其他']
-            },
-            series: [{
-                name: '消息类型',
-                type: 'pie',
-                radius: ['40%', '70%'],
-                avoidLabelOverlap: false,
-                itemStyle: {
-                    borderRadius: 10,
-                    borderColor: '#fff',
-                    borderWidth: 2
-                },
-                label: {
-                    show: false,
-                    position: 'center'
-                },
-                emphasis: {
-                    label: {
-                        show: true,
-                        fontSize: '18',
-                        fontWeight: 'bold'
-                    }
-                },
-                labelLine: {
-                    show: false
-                },
-                data: [
-                    {value: 74, name: '文本消息'},
-                    {value: 44, name: '图片/表情'},
-                    {value: 6, name: '系统消息'},
-                    {value: 3, name: '语音消息'},
-                    {value: 1, name: '其他'}
-                ]
-            }]
-        });
-
-        // 词云配置
+        
+        // 聊天关键词词云
         wordcloud.setOption({
             tooltip: {},
             series: [{
@@ -233,21 +452,19 @@
                 shape: 'circle',
                 left: 'center',
                 top: 'center',
-                width: '90%',
+                width: '95%',
                 height: '90%',
-                right: null,
-                bottom: null,
-                sizeRange: [12, 60],
-                rotationRange: [0, 0],
+                sizeRange: [15, 70],
+                rotationRange: [-45, 45],
                 rotationStep: 45,
-                gridSize: 8,
+                gridSize: 12,
                 drawOutOfBound: false,
                 textStyle: {
                     color: function () {
                         return 'rgb(' + [
-                            Math.round(Math.random() * 160),
-                            Math.round(Math.random() * 160),
-                            Math.round(Math.random() * 160)
+                            Math.round(Math.random() * 160 + 40),
+                            Math.round(Math.random() * 160 + 40),
+                            Math.round(Math.random() * 160 + 40)
                         ].join(',') + ')';
                     }
                 },
@@ -259,79 +476,23 @@
                     }
                 },
                 data: [
-                    {name: '麻将', value: 100},
-                    {name: '少数民族', value: 95},
-                    {name: '喝酒', value: 85},
-                    {name: '石莉芳', value: 80},
-                    {name: '王富贵', value: 78},
-                    {name: '规则', value: 65},
-                    {name: '服饰', value: 60},
-                    {name: '清一色', value: 55},
-                    {name: '斗地主', value: 50},
-                    {name: '贵州', value: 45},
-                    {name: '侗族', value: 40},
-                    {name: '睡觉', value: 35},
-                    {name: '聊天', value: 30},
-                    {name: '教学', value: 25}
-                ]
-            }]
-        });
-
-        // 消息流向图配置
-        flowChart.setOption({
-            tooltip: {
-                trigger: 'item',
-                triggerOn: 'mousemove'
-            },
-            legend: {
-                data: ['莉芳', 'NOIR']
-            },
-            series: {
-                type: 'sankey',
-                layout: 'none',
-                emphasis: {
-                    focus: 'adjacency'
-                },
-                data: [
-                    {name: '莉芳'},
-                    {name: 'NOIR'},
-                    {name: '开场问候'},
-                    {name: '深夜聊天'},
-                    {name: '自我介绍'},
-                    {name: '麻将教学'},
-                    {name: '民族文化'},
-                    {name: '喝酒趣闻'},
-                    {name: '结束对话'}
-                ],
-                links: [
-                    {source: '莉芳', target: '开场问候', value: 5},
-                    {source: 'NOIR', target: '开场问候', value: 3},
-                    
-                    {source: '开场问候', target: '自我介绍', value: 6},
-                    
-                    {source: '自我介绍', target: '深夜聊天', value: 4},
-                    {source: '自我介绍', target: '麻将教学', value: 3},
-                    {source: '自我介绍', target: '民族文化', value: 4},
-                    
-                    {source: '深夜聊天', target: '麻将教学', value: 2},
-                    {source: '深夜聊天', target: '民族文化', value: 3},
-                    {source: '深夜聊天', target: '喝酒趣闻', value: 5},
-                    
-                    {source: '麻将教学', target: '结束对话', value: 4},
-                    {source: '民族文化', target: '结束对话', value: 4},
-                    {source: '喝酒趣闻', target: '结束对话', value: 3},
+                    {name: '麻将', value: 100, textStyle: {color: '#e74c3c'}},
+                    {name: '少数民族', value: 95, textStyle: {color: '#3498db'}},
+                    {name: '规则', value: 85},
+                    {name: '喝酒', value: 80},
+                    {name: '石莉芳', value: 78},
+                    {name: '王富贵', value: 75},
+                    {name: '习俗', value: 70},
+                    {name: '侗族', value: 65},
+                    {name: '教学', value: 60},
+                    {name: '斗地主', value: 55},
+                    {name: '清一色', value: 50},
+                    {name: '服饰', value: 45},
+                    {name: '聊天', value: 40},
+                    {name: '称呼', value: 35},
+                    {name: '有趣', value: 30},
+                    {name: '下次', value: 25},
+                    {name: '机会', value: 20},
+                    {name: '熬夜', value: 15}
                 ]
             }
-        });
-
-        // 响应式调整
-        window.addEventListener('resize', function() {
-            heatmap.resize();
-            typeChart.resize();
-            wordcloud.resize();
-            flowChart.resize();
-        });
-    </script>
-</body>
-</html>
-
