@@ -1,1 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>微信聊天数据分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f8fa;
+            color: #333;
+        }
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .chart-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+            padding: 15px;
+            flex: 1;
+            min-width: 300px;
+        }
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            border-left: 4px solid #3498db;
+            padding-left: 10px;
+        }
+        .chart {
+            height: 400px;
+            width: 100%;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #3498db;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>微信聊天数据分析可视化</h1>
+            <p>莉芳与NOIR的聊天记录分析 | 时间范围：2024-06-08 至 2024-06-09</p>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stats">
+            <div class="stat-card">
+                <div>总消息量</div>
+                <div class="stat-value">128</div>
+            </div>
+            <div class="stat-card">
+                <div>图片/表情</div>
+                <div class="stat-value">84</div>
+            </div>
+            <div class="stat-card">
+                <div>最长对话轮次</div>
+                <div class="stat-value">18</div>
+            </div>
+            <div class="stat-card">
+                <div>聊天时长</div>
+                <div class="stat-value">5h30m</div>
+            </div>
+        </div>
+
+        <!-- 图表容器 -->
+        <div class="chart-container">
+            <div class="chart-card">
+                <div class="chart-title">消息时间分布热力图</div>
+                <div id="heatmap" class="chart"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">消息类型分布</div>
+                <div id="typeChart" class="chart"></div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-card">
+                <div class="chart-title">聊天关键词词云</div>
+                <div id="wordcloud" class="chart"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">消息流向分析</div>
+                <div id="flowChart" class="chart"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化图表
+        const heatmap = echarts.init(document.getElementById('heatmap'));
+        const typeChart = echarts.init(document.getElementById('typeChart'));
+        const wordcloud = echarts.init(document.getElementById('wordcloud'));
+        const flowChart = echarts.init(document.getElementById('flowChart'));
+
+        // 消息时间热力图配置
+        heatmap.setOption({
+            tooltip: {
+                position: 'top'
+            },
+            visualMap: {
+                min: 0,
+                max: 15,
+                calculable: true,
+                orient: 'horizontal',
+                left: 'center',
+                bottom: 0,
+                inRange: {
+                    color: ['#e0f3f8', '#abd9e9', '#74add1', '#4575b4', '#313695']
+                }
+            },
+            calendar: {
+                top: 30,
+                left: 30,
+                right: 30,
+                cellSize: ['auto', 15],
+                range: ['2024-06-08', '2024-06-09'],
+                itemStyle: {
+                    borderWidth: 0.5
+                },
+                yearLabel: {show: false}
+            },
+            series: {
+                type: 'heatmap',
+                coordinateSystem: 'calendar',
+                data: [
+                    // 6月8日数据 (示例)
+                    ['2024-06-08', 2, 0], ['2024-06-08', 3, 0], ['2024-06-08', 4, 0],
+                    ['2024-06-08', 20, 1], ['2024-06-08', 21, 3], 
+                    ['2024-06-08', 22, 8], ['2024-06-08', 23, 15],
+                    
+                    // 6月9日数据
+                    ['2024-06-09', 0, 12], ['2024-06-09', 1, 10], 
+                    ['2024-06-09', 2, 6], ['2024-06-09', 3, 2],
+                    ['2024-06-09', 8, 5], ['2024-06-09', 10, 3]
+                ].map(item => {
+                    return {
+                        value: [item[0], item[1], item[2]],
+                        name: `${item[0]} ${item[1]}:00 - ${item[1]+1}:00`,
+                        label: {show: true}
+                    };
+                })
+            }
+        });
+
+        // 消息类型分布图配置
+        typeChart.setOption({
+            tooltip: {
+                trigger: 'item',
+                formatter: '{a} <br/>{b}: {c} ({d}%)'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 10,
+                data: ['文本消息', '图片/表情', '系统消息', '语音消息', '其他']
+            },
+            series: [{
+                name: '消息类型',
+                type: 'pie',
+                radius: ['40%', '70%'],
+                avoidLabelOverlap: false,
+                itemStyle: {
+                    borderRadius: 10,
+                    borderColor: '#fff',
+                    borderWidth: 2
+                },
+                label: {
+                    show: false,
+                    position: 'center'
+                },
+                emphasis: {
+                    label: {
+                        show: true,
+                        fontSize: '18',
+                        fontWeight: 'bold'
+                    }
+                },
+                labelLine: {
+                    show: false
+                },
+                data: [
+                    {value: 74, name: '文本消息'},
+                    {value: 44, name: '图片/表情'},
+                    {value: 6, name: '系统消息'},
+                    {value: 3, name: '语音消息'},
+                    {value: 1, name: '其他'}
+                ]
+            }]
+        });
+
+        // 词云配置
+        wordcloud.setOption({
+            tooltip: {},
+            series: [{
+                type: 'wordCloud',
+                shape: 'circle',
+                left: 'center',
+                top: 'center',
+                width: '90%',
+                height: '90%',
+                right: null,
+                bottom: null,
+                sizeRange: [12, 60],
+                rotationRange: [0, 0],
+                rotationStep: 45,
+                gridSize: 8,
+                drawOutOfBound: false,
+                textStyle: {
+                    color: function () {
+                        return 'rgb(' + [
+                            Math.round(Math.random() * 160),
+                            Math.round(Math.random() * 160),
+                            Math.round(Math.random() * 160)
+                        ].join(',') + ')';
+                    }
+                },
+                emphasis: {
+                    focus: 'self',
+                    textStyle: {
+                        shadowBlur: 10,
+                        shadowColor: '#333'
+                    }
+                },
+                data: [
+                    {name: '麻将', value: 100},
+                    {name: '少数民族', value: 95},
+                    {name: '喝酒', value: 85},
+                    {name: '石莉芳', value: 80},
+                    {name: '王富贵', value: 78},
+                    {name: '规则', value: 65},
+                    {name: '服饰', value: 60},
+                    {name: '清一色', value: 55},
+                    {name: '斗地主', value: 50},
+                    {name: '贵州', value: 45},
+                    {name: '侗族', value: 40},
+                    {name: '睡觉', value: 35},
+                    {name: '聊天', value: 30},
+                    {name: '教学', value: 25}
+                ]
+            }]
+        });
+
+        // 消息流向图配置
+        flowChart.setOption({
+            tooltip: {
+                trigger: 'item',
+                triggerOn: 'mousemove'
+            },
+            legend: {
+                data: ['莉芳', 'NOIR']
+            },
+            series: {
+                type: 'sankey',
+                layout: 'none',
+                emphasis: {
+                    focus: 'adjacency'
+                },
+                data: [
+                    {name: '莉芳'},
+                    {name: 'NOIR'},
+                    {name: '开场问候'},
+                    {name: '深夜聊天'},
+                    {name: '自我介绍'},
+                    {name: '麻将教学'},
+                    {name: '民族文化'},
+                    {name: '喝酒趣闻'},
+                    {name: '结束对话'}
+                ],
+                links: [
+                    {source: '莉芳', target: '开场问候', value: 5},
+                    {source: 'NOIR', target: '开场问候', value: 3},
+                    
+                    {source: '开场问候', target: '自我介绍', value: 6},
+                    
+                    {source: '自我介绍', target: '深夜聊天', value: 4},
+                    {source: '自我介绍', target: '麻将教学', value: 3},
+                    {source: '自我介绍', target: '民族文化', value: 4},
+                    
+                    {source: '深夜聊天', target: '麻将教学', value: 2},
+                    {source: '深夜聊天', target: '民族文化', value: 3},
+                    {source: '深夜聊天', target: '喝酒趣闻', value: 5},
+                    
+                    {source: '麻将教学', target: '结束对话', value: 4},
+                    {source: '民族文化', target: '结束对话', value: 4},
+                    {source: '喝酒趣闻', target: '结束对话', value: 3},
+                ]
+            }
+        });
+
+        // 响应式调整
+        window.addEventListener('resize', function() {
+            heatmap.resize();
+            typeChart.resize();
+            wordcloud.resize();
+            flowChart.resize();
+        });
+    </script>
+</body>
+</html>
 
