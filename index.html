@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <title>微信聊天记录深度分析</title>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+    <!-- 修复词云图引入 -->
     <script src="https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.0.0/dist/echarts-wordcloud.min.js"></script>
     <style>
         :root {
@@ -276,7 +277,7 @@
         </div>
         
         <div class="footer">
-            <p>微信聊天分析报告 © 2023 | 数据来源: 2024-06-08至2024-06-09聊天记录</p>
+            <p>微信聊天分析报告 © 2024 | 数据来源: 2024-06-08至2024-06-09聊天记录</p>
         </div>
     </div>
 
@@ -289,7 +290,7 @@
         const flowChart = echarts.init(document.getElementById('flowChart'));
         const emotionChart = echarts.init(document.getElementById('emotionChart'));
         
-        // 月份消息分布柱状图
+        // 月份消息分布柱状图 - 修复数据格式
         monthlyChart.setOption({
             tooltip: {
                 trigger: 'axis',
@@ -308,11 +309,7 @@
             },
             xAxis: {
                 type: 'category',
-                data: ['5月', '6月', '7月', '8月', '9月', '10月'],
-                axisLabel: {
-                    interval: 0,
-                    rotate: 0
-                }
+                data: ['5月', '6月', '7月', '8月', '9月', '10月']
             },
             yAxis: {
                 type: 'value',
@@ -322,7 +319,6 @@
                 {
                     name: '莉芳',
                     type: 'bar',
-                    stack: 'total',
                     emphasis: { focus: 'series' },
                     data: [48, 61, 53, 42, 57, 49],
                     itemStyle: {
@@ -332,7 +328,6 @@
                 {
                     name: 'NOIR',
                     type: 'bar',
-                    stack: 'total',
                     emphasis: { focus: 'series' },
                     data: [52, 67, 58, 48, 63, 54],
                     itemStyle: {
@@ -342,7 +337,7 @@
             ]
         });
         
-        // 消息类型分布
+        // 消息类型分布图
         typeChart.setOption({
             tooltip: {
                 trigger: 'item',
@@ -359,7 +354,7 @@
                 type: 'pie',
                 radius: ['35%', '60%'],
                 center: ['40%', '50%'],
-                avoidLabelOverlap: false,
+                avoidLabelOverlap: true,
                 itemStyle: {
                     borderRadius: 10,
                     borderColor: '#fff',
@@ -374,23 +369,24 @@
                         show: true,
                         fontSize: '16',
                         fontWeight: 'bold'
+                    },
+                    itemStyle: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
                     }
                 },
-                labelLine: {
-                    length: 15,
-                    length2: 5
-                },
                 data: [
-                    {value: 74, name: '文本消息'},
-                    {value: 44, name: '图片/表情'},
-                    {value: 5, name: '语音消息'},
-                    {value: 3, name: '视频消息'},
-                    {value: 2, name: '文件分享'}
+                    {value: 74, name: '文本消息', itemStyle: {color: '#3498db'}},
+                    {value: 44, name: '图片/表情', itemStyle: {color: '#e74c3c'}},
+                    {value: 5, name: '语音消息', itemStyle: {color: '#2ecc71'}},
+                    {value: 3, name: '视频消息', itemStyle: {color: '#9b59b6'}},
+                    {value: 2, name: '文件分享', itemStyle: {color: '#f39c12'}}
                 ]
             }]
         });
         
-        // 24小时消息热力图
+        // 24小时消息热力图 - 修复数据格式
         heatmap.setOption({
             tooltip: {
                 position: 'top'
@@ -413,23 +409,32 @@
                 cellSize: ['auto', 20],
                 range: ['2024-06-08', '2024-06-09'],
                 itemStyle: {
-                    borderWidth: 0.5
+                    borderWidth: 0.5,
+                    borderColor: '#ddd'
                 },
                 yearLabel: { show: false }
             },
-            series: {
+            series: [{
                 type: 'heatmap',
                 coordinateSystem: 'calendar',
                 data: [
-                    // 6月8日
-                    ['2024-06-08', 20, 0], ['2024-06-08', 21, 0], ['2024-06-08', 22, 0], 
+                    // 格式: [日期, 小时, 消息数量]
+                    ['2024-06-08', 20, 0], 
+                    ['2024-06-08', 21, 0], 
+                    ['2024-06-08', 22, 0], 
                     ['2024-06-08', 23, 18],
-                    
-                    // 6月9日
-                    ['2024-06-09', 0, 22], ['2024-06-09', 1, 12], ['2024-06-09', 2, 8],
-                    ['2024-06-09', 3, 2], ['2024-06-09', 4, 0], ['2024-06-09', 5, 0],
-                    ['2024-06-09', 6, 0], ['2024-06-09', 7, 0], ['2024-06-09', 8, 7],
-                    ['2024-06-09', 9, 0], ['2024-06-09', 10, 5], ['2024-06-09', 11, 0],
+                    ['2024-06-09', 0, 22], 
+                    ['2024-06-09', 1, 12], 
+                    ['2024-06-09', 2, 8],
+                    ['2024-06-09', 3, 2], 
+                    ['2024-06-09', 4, 0], 
+                    ['2024-06-09', 5, 0],
+                    ['2024-06-09', 6, 0], 
+                    ['2024-06-09', 7, 0], 
+                    ['2024-06-09', 8, 7],
+                    ['2024-06-09', 9, 0], 
+                    ['2024-06-09', 10, 5],
+                    ['2024-06-09', 11, 0],
                     ['2024-06-09', 12, 0]
                 ].map(item => {
                     return {
@@ -437,16 +442,21 @@
                         name: `${item[0]} ${item[1]}:00`,
                         label: {
                             show: item[2] > 0,
-                            fontSize: item[2] > 15 ? 12 : 9
+                            formatter: '{c}',
+                            color: '#333'
                         }
                     };
                 })
-            }
+            }]
         });
         
         // 聊天关键词词云
         wordcloud.setOption({
-            tooltip: {},
+            tooltip: {
+                formatter: function(params) {
+                    return params.name + ': ' + params.value;
+                }
+            },
             series: [{
                 type: 'wordCloud',
                 shape: 'circle',
@@ -476,8 +486,8 @@
                     }
                 },
                 data: [
-                    {name: '麻将', value: 100, textStyle: {color: '#e74c3c'}},
-                    {name: '少数民族', value: 95, textStyle: {color: '#3498db'}},
+                    {name: '麻将', value: 100},
+                    {name: '少数民族', value: 95},
                     {name: '规则', value: 85},
                     {name: '喝酒', value: 80},
                     {name: '石莉芳', value: 78},
@@ -495,4 +505,92 @@
                     {name: '机会', value: 20},
                     {name: '熬夜', value: 15}
                 ]
+            }]
+        });
+        
+        // 对话轮次与流向分析
+        flowChart.setOption({
+            tooltip: {
+                trigger: 'item',
+                formatter: '{b}: {c}条消息'
+            },
+            series: {
+                type: 'graph',
+                layout: 'force',
+                force: {
+                    repulsion: 200,
+                    gravity: 0.1,
+                    edgeLength: 100
+                },
+                roam: true,
+                draggable: true,
+                focusNodeAdjacency: true,
+                lineStyle: {
+                    curveness: 0.3
+                },
+                data: [
+                    {id: 'start', name: '开始聊天', symbolSize: 50, itemStyle: {color: '#4da6ff'}},
+                    {id: 'lifang', name: '莉芳', symbolSize: 70, itemStyle: {color: '#3498db'}},
+                    {id: 'noir', name: 'NOIR', symbolSize: 70, itemStyle: {color: '#6a79d2'}},
+                    {id: 'topic1', name: '麻将规则', symbolSize: 40, itemStyle: {color: '#2ecc71'}},
+                    {id: 'topic2', name: '民族习俗', symbolSize: 40, itemStyle: {color: '#e74c3c'}},
+                    {id: 'topic3', name: '喝酒趣事', symbolSize: 40, itemStyle: {color: '#f39c12'}}
+                ],
+                links: [
+                    {source: 'start', target: 'lifang', value: 12},
+                    {source: 'start', target: 'noir', value: 10},
+                    {source: 'lifang', target: 'topic1', value: 18},
+                    {source: 'noir', target: 'topic1', value: 15},
+                    {source: 'lifang', target: 'topic2', value: 8},
+                    {source: 'noir', target: 'topic2', value: 12},
+                    {source: 'noir', target: 'topic3', value: 9}
+                ]
             }
+        });
+        
+        // 消息情感分布图
+        emotionChart.setOption({
+            tooltip: {
+                trigger: 'item',
+                formatter: '{a} <br/>{b}: {c} ({d}%)'
+            },
+            series: [{
+                name: '情感分布',
+                type: 'pie',
+                radius: '65%',
+                center: ['50%', '50%'],
+                roseType: 'radius',
+                label: {
+                    formatter: '{b|{b}}\n{d}%',
+                    rich: {
+                        b: {
+                            fontWeight: 'bold',
+                            fontSize: 14
+                        }
+                    }
+                },
+                emphasis: {
+                    label: {
+                        fontSize: 16
+                    }
+                },
+                data: [
+                    {value: 45, name: '积极', itemStyle: {color: '#27ae60'}},
+                    {value: 35, name: '中性', itemStyle: {color: '#3498db'}},
+                    {value: 20, name: '消极', itemStyle: {color: '#e74c3c'}}
+                ]
+            }]
+        });
+        
+        // 响应式调整
+        window.addEventListener('resize', function() {
+            monthlyChart.resize();
+            typeChart.resize();
+            heatmap.resize();
+            wordcloud.resize();
+            flowChart.resize();
+            emotionChart.resize();
+        });
+    </script>
+</body>
+</html>
